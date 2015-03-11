@@ -5,7 +5,7 @@
   "authors": [
     "Don McCurdy <don.r.mccurdy@gmail.com>"
   ],
-  "description": "placeholder",
+  "description": "Modifications to THREE.TrackballControls, offering camera controls suitable for flat scenes — panning, zooming, and limited rotation.",
   "main": "MapControls.js",
   "keywords": [
     "three.js",

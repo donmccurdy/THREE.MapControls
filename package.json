@@ -1,0 +1,29 @@
+{
+  "name": "THREE.MapControls",
+  "version": "0.0.0",
+  "description": "Modifications to THREE.TrackballControls, offering camera controls suitable for flat scenes — panning, zooming, and limited rotation.",
+  "main": "MapControls.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/donmccurdy/THREE.MapControls.git"
+  },
+  "keywords": [
+    "threejs",
+    "three.js",
+    "webgl",
+    "controls"
+  ],
+  "author": "Don McCurdy <don.r.mccurdy@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/donmccurdy/THREE.MapControls/issues"
+  },
+  "homepage": "https://github.com/donmccurdy/THREE.MapControls",
+  "dependencies": {
+    "grunt": "^0.4.5",
+    "grunt-bump": "^0.3.0"
+  }
+}
