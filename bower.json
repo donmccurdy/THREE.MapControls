@@ -1,0 +1,20 @@
+{
+  "name": "THREE.MapControls",
+  "version": "0.0.0",
+  "homepage": "https://github.com/donmccurdy/THREE.MapControls",
+  "authors": [
+    "Don McCurdy <don.r.mccurdy@gmail.com>"
+  ],
+  "description": "placeholder",
+  "main": "MapControls.js",
+  "keywords": [
+    "three.js",
+    "threejs",
+    "webgl",
+    "controls"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "threejs": "*"
+  }
+}
