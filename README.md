@@ -6,7 +6,7 @@ Modifications to THREE.TrackballControls, offering camera controls suitable for 
 Add `MapControls.js` to your project, or install with Bower:
 
 ```
-bower install --save THREE.MapControls
+bower install --save three.map-controls
 ```
 
 To use the camera controls:
