@@ -13,7 +13,8 @@ To use the camera controls:
 
 ```javascript
 // Setup
-var controls = new THREE.MapControls(camera, renderer.domElement);
+var controls = new THREE.MapControls(camera, renderer.domElement, );
+controls.surface = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
 // Update
 function update () {

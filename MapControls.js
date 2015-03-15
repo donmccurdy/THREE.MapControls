@@ -19,14 +19,12 @@ THREE.MapControls = function ( object, domElement ) {
 
 	this.rotateSpeed = 1.0;
 	this.zoomSpeed = 1.2;
-	this.panSpeed = 0.3;
 
 	this.noRotate = false;
 	this.noZoom = false;
 	this.noPan = false;
 	this.noRoll = false;
 
-	this.staticMoving = false;
 	this.dynamicDampingFactor = 0.2;
 
 	this.minDistance = 25;
@@ -37,6 +35,7 @@ THREE.MapControls = function ( object, domElement ) {
 	// internals
 
 	this.target = new THREE.Vector3();
+	this.surface = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0);
 
 	var EPS = 0.000001;
 
@@ -197,16 +196,8 @@ THREE.MapControls = function ( object, domElement ) {
 
 				_rotateEnd.applyQuaternion( quaternion );
 
-				if ( _this.staticMoving ) {
-
-					_rotateStart.copy( _rotateEnd );
-
-				} else {
-
-					quaternion.setFromAxisAngle( axis, angle * ( _this.dynamicDampingFactor - 1.0 ) );
-					_rotateStart.applyQuaternion( quaternion );
-
-				}
+				quaternion.setFromAxisAngle( axis, angle * ( _this.dynamicDampingFactor - 1.0 ) );
+				_rotateStart.applyQuaternion( quaternion );
 
 			}
 		};
@@ -231,15 +222,7 @@ THREE.MapControls = function ( object, domElement ) {
 
 				_eye.multiplyScalar( factor );
 
-				if ( _this.staticMoving ) {
-
-					_zoomStart.copy( _zoomEnd );
-
-				} else {
-
-					_zoomStart.y += ( _zoomEnd.y - _zoomStart.y ) * this.dynamicDampingFactor;
-
-				}
+				_zoomStart.y += ( _zoomEnd.y - _zoomStart.y ) * this.dynamicDampingFactor;
 
 			}
 
@@ -249,35 +232,34 @@ THREE.MapControls = function ( object, domElement ) {
 
 	this.panCamera = (function(){
 
-		var mouseChange = new THREE.Vector2(),
-			objectUp = new THREE.Vector3(),
-			pan = new THREE.Vector3();
+		var mouseStart = new THREE.Vector2(),
+			mouseEnd = new THREE.Vector2(),
+			mouseChange = new THREE.Vector2(),
+			surfaceStart,
+			surfaceEnd,
+			pan = new THREE.Vector3(),
+			raycaster = new THREE.Raycaster();
 
 		return function () {
 
-			mouseChange.copy( _panEnd ).sub( _panStart );
+			mouseStart.copy( _panStart ).setX( 1 - _panStart.x );
+			mouseEnd.copy( _panEnd ).setX( 1 - _panEnd.x );
 
-			if ( mouseChange.lengthSq() ) {
+			raycaster.setFromCamera( mouseStart, _this.object );
+			surfaceStart = raycaster.ray.intersectPlane( _this.surface );
 
-				mouseChange.multiplyScalar( _eye.length() * _this.panSpeed );
+			raycaster.setFromCamera( mouseEnd, _this.object );
+			surfaceEnd = raycaster.ray.intersectPlane( _this.surface );
 
-				pan.copy( _eye ).cross( _this.object.up ).setLength( mouseChange.x );
-				pan.add( objectUp.copy( _this.object.up ).setLength( mouseChange.y ) );
+			pan.subVectors(surfaceEnd, surfaceStart);
 
+			if ( pan.lengthSq() ) {
 				_this.object.position.add( pan );
 				_this.target.add( pan );
-
-				if ( _this.staticMoving ) {
-
-					_panStart.copy( _panEnd );
-
-				} else {
-
-					_panStart.add( mouseChange.subVectors( _panEnd, _panStart ).multiplyScalar( _this.dynamicDampingFactor ) );
-
-				}
-
+				mouseChange.subVectors( _panEnd, _panStart);
+				_panStart.add( mouseChange.multiplyScalar( _this.dynamicDampingFactor ) );
 			}
+
 		};
 
 	}());
