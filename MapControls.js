@@ -47,8 +47,9 @@ THREE.MapControls = function ( object, domElement ) {
 
 	_eye = new THREE.Vector3(),
 
-	_rotateStart = new THREE.Vector3(),
-	_rotateEnd = new THREE.Vector3(),
+	_rotateStart = new THREE.Vector2(),
+	_rotateEnd = new THREE.Vector2(),
+	_rotateHeading = new THREE.Quaternion(),
 
 	_zoomStart = new THREE.Vector2(),
 	_zoomEnd = new THREE.Vector2(),
@@ -124,83 +125,52 @@ THREE.MapControls = function ( object, domElement ) {
 
 	}() );
 
-	var getMouseProjectionOnBall = ( function () {
-
-		var vector = new THREE.Vector3();
-		var objectUp = new THREE.Vector3();
-		var mouseOnBall = new THREE.Vector3();
-
-		return function ( pageX, pageY ) {
-
-			mouseOnBall.set(
-				( pageX - _this.screen.width * 0.5 - _this.screen.left ) / (_this.screen.width*0.5),
-				( _this.screen.height * 0.5 + _this.screen.top - pageY ) / (_this.screen.height*0.5),
-				0.0
-			);
-
-			var length = mouseOnBall.length();
-
-			if ( _this.noRoll ) {
-
-				if ( length < Math.SQRT1_2 ) {
-
-					mouseOnBall.z = Math.sqrt( 1.0 - length*length );
-
-				} else {
-
-					mouseOnBall.z = 0.5 / length;
-					
-				}
-
-			} else if ( length > 1.0 ) {
-
-				mouseOnBall.normalize();
-
-			} else {
-
-				mouseOnBall.z = Math.sqrt( 1.0 - length * length );
-
-			}
-
-			_eye.copy( _this.object.position ).sub( _this.target );
-
-			vector.copy( _this.object.up ).setLength( mouseOnBall.y );
-			vector.add( objectUp.copy( _this.object.up ).cross( _eye ).setLength( mouseOnBall.x ) );
-			vector.add( _eye.setLength( mouseOnBall.z ) );
-
-			return vector;
-
-		};
-
-	}() );
-
 	this.rotateCamera = (function(){
 
-		var axis = new THREE.Vector3(),
-			quaternion = new THREE.Quaternion();
+		var axisX = new THREE.Vector3(1, 0, 0),
+			axisY = new THREE.Vector3(0, 0, 1),
+			rotateChange = new THREE.Vector2(),
+			quaternionX = new THREE.Quaternion(),
+			quaternionY = new THREE.Quaternion(),
+			quaternionXInverse = new THREE.Quaternion(),
+			quaternionYInverse = new THREE.Quaternion();
 
 
 		return function () {
 
-			var angle = Math.acos( _rotateStart.dot( _rotateEnd ) / _rotateStart.length() / _rotateEnd.length() );
+			rotateChange.subVectors( _rotateEnd, _rotateStart );
 
-			if ( angle ) {
+			if ( rotateChange.lengthSq() > EPS ) {
 
-				axis.crossVectors( _rotateStart, _rotateEnd ).normalize();
+				quaternionXInverse = quaternionX.clone().inverse();
+				quaternionYInverse = quaternionY.clone().inverse();
 
-				angle *= _this.rotateSpeed;
+				// Undo previous transformation
+				_eye.applyQuaternion( quaternionYInverse );
+				_this.object.up.applyQuaternion( quaternionYInverse );
+				_eye.applyQuaternion( quaternionXInverse );
+				_this.object.up.applyQuaternion( quaternionXInverse );
 
-				quaternion.setFromAxisAngle( axis, -angle );
+				// Apply new transformations to previous state
+				quaternionX = quaternionX.clone()
+					.setFromAxisAngle( axisX, -1 * rotateChange.y * _this.rotateSpeed )
+					.multiply(quaternionX);
+				quaternionY = quaternionY.clone()
+					.setFromAxisAngle( axisY, rotateChange.x * _this.rotateSpeed )
+					.multiply(quaternionY);
 
-				_eye.applyQuaternion( quaternion );
-				_this.object.up.applyQuaternion( quaternion );
+				// Apply new transformation
+				_eye.applyQuaternion( quaternionX );
+				_this.object.up.applyQuaternion( quaternionX );
+				_eye.applyQuaternion( quaternionY );
+				_this.object.up.applyQuaternion( quaternionY );
 
-				_rotateEnd.applyQuaternion( quaternion );
+				// Ease transitions
+				_rotateStart.add( rotateChange.multiplyScalar( _this.dynamicDampingFactor ) );
 
-				quaternion.setFromAxisAngle( axis, angle * ( _this.dynamicDampingFactor - 1.0 ) );
-				_rotateStart.applyQuaternion( quaternion );
-
+				_rotateHeading.copy( quaternionY );
 			}
+
 		};
 
 	}());
@@ -261,6 +231,7 @@ THREE.MapControls = function ( object, domElement ) {
 			pan.subVectors(surfaceEnd, surfaceStart).setLength( mouseChange.length() * _this.panSpeed );
 
 			if ( pan.lengthSq() ) {
+				pan.applyQuaternion(_rotateHeading);
 				_this.object.position.add( pan );
 				_this.target.add( pan );
 				_panStart.add( mouseChange.multiplyScalar( _this.dynamicDampingFactor ) );
@@ -410,8 +381,8 @@ THREE.MapControls = function ( object, domElement ) {
 
 		if ( _state === STATE.ROTATE && !_this.noRotate ) {
 
-			_rotateStart.copy( getMouseProjectionOnBall( event.pageX, event.pageY ) );
-			_rotateEnd.copy( _rotateStart );
+			_rotateStart.copy( getMouseOnScreen( event.pageX, event.pageY ) );
+			_rotateEnd.copy( _rotateStart );			
 
 		} else if ( _state === STATE.ZOOM && !_this.noZoom ) {
 
@@ -441,7 +412,7 @@ THREE.MapControls = function ( object, domElement ) {
 
 		if ( _state === STATE.ROTATE && !_this.noRotate ) {
 
-			_rotateEnd.copy( getMouseProjectionOnBall( event.pageX, event.pageY ) );
+			_rotateEnd.copy( getMouseOnScreen( event.pageX, event.pageY ) );
 
 		} else if ( _state === STATE.ZOOM && !_this.noZoom ) {
 
