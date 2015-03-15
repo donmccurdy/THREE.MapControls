@@ -19,6 +19,7 @@ THREE.MapControls = function ( object, domElement ) {
 
 	this.rotateSpeed = 1.0;
 	this.zoomSpeed = 1.2;
+	this.panSpeed = 60.0;
 
 	this.noRotate = false;
 	this.noZoom = false;
@@ -232,31 +233,36 @@ THREE.MapControls = function ( object, domElement ) {
 
 	this.panCamera = (function(){
 
-		var mouseStart = new THREE.Vector2(),
-			mouseEnd = new THREE.Vector2(),
-			mouseChange = new THREE.Vector2(),
+		var mouseChange = new THREE.Vector2(),
 			surfaceStart,
 			surfaceEnd,
+			down = _this.surface.normal.clone().negate(),
 			pan = new THREE.Vector3(),
 			raycaster = new THREE.Raycaster();
 
 		return function () {
 
-			mouseStart.copy( _panStart ).setX( 1 - _panStart.x );
-			mouseEnd.copy( _panEnd ).setX( 1 - _panEnd.x );
+			raycaster.set( _this.object.position, down );
 
-			raycaster.setFromCamera( mouseStart, _this.object );
+			raycaster.ray.origin.x = -1 * _panStart.x * _this.panSpeed;
+			raycaster.ray.origin.y = -1 * _panStart.y * _this.panSpeed;
 			surfaceStart = raycaster.ray.intersectPlane( _this.surface );
 
-			raycaster.setFromCamera( mouseEnd, _this.object );
+			raycaster.ray.origin.x = -1 * _panEnd.x * _this.panSpeed;
+			raycaster.ray.origin.y = -1 * _panEnd.y * _this.panSpeed;
 			surfaceEnd = raycaster.ray.intersectPlane( _this.surface );
 
-			pan.subVectors(surfaceEnd, surfaceStart);
+			if (!surfaceEnd || !surfaceStart) {
+				console.log('Camera is below surface!');
+				return;
+			}
+
+			mouseChange.subVectors( _panEnd, _panStart);
+			pan.subVectors(surfaceEnd, surfaceStart).setLength( mouseChange.length() * _this.panSpeed );
 
 			if ( pan.lengthSq() ) {
 				_this.object.position.add( pan );
 				_this.target.add( pan );
-				mouseChange.subVectors( _panEnd, _panStart);
 				_panStart.add( mouseChange.multiplyScalar( _this.dynamicDampingFactor ) );
 			}
 
