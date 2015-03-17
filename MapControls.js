@@ -36,7 +36,7 @@ THREE.MapControls = function ( object, domElement ) {
 	// internals
 
 	this.target = new THREE.Vector3();
-	this.surface = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0);
+	this.surface = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
 	var EPS = 0.000001;
 
@@ -153,10 +153,10 @@ THREE.MapControls = function ( object, domElement ) {
 
 				// Apply new transformations to previous state
 				quaternionX = quaternionX.clone()
-					.setFromAxisAngle( axisX, -1 * rotateChange.y * _this.rotateSpeed )
+					.setFromAxisAngle( axisX, rotateChange.y * _this.rotateSpeed )
 					.multiply(quaternionX);
 				quaternionY = quaternionY.clone()
-					.setFromAxisAngle( axisY, rotateChange.x * _this.rotateSpeed )
+					.setFromAxisAngle( axisY, -1 * rotateChange.x * _this.rotateSpeed )
 					.multiply(quaternionY);
 
 				// Apply new transformation
@@ -214,11 +214,11 @@ THREE.MapControls = function ( object, domElement ) {
 
 			raycaster.set( _this.object.position, down );
 
-			raycaster.ray.origin.x = -1 * _panStart.x * _this.panSpeed;
+			raycaster.ray.origin.x = _panStart.x * _this.panSpeed;
 			raycaster.ray.origin.y = -1 * _panStart.y * _this.panSpeed;
 			surfaceStart = raycaster.ray.intersectPlane( _this.surface );
 
-			raycaster.ray.origin.x = -1 * _panEnd.x * _this.panSpeed;
+			raycaster.ray.origin.x = _panEnd.x * _this.panSpeed;
 			raycaster.ray.origin.y = -1 * _panEnd.y * _this.panSpeed;
 			surfaceEnd = raycaster.ray.intersectPlane( _this.surface );
 
