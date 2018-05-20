@@ -1,4 +1,7 @@
 # THREE.MapControls
+
+> **NOTE:** This project is deprecated. Use `THREE.OrbitControls` instead, which supports a horizontal panning mode.
+
 Modifications to THREE.TrackballControls, offering camera controls suitable for flat scenes — panning, zooming, and limited rotation.
 
 ## Quick Start
